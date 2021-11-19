@@ -2,13 +2,13 @@ version: '3'
 
 services:
 
-    # kali:
-    #     build: ./kali
-    #     container_name: kali
-    #     tty: true        
-    #     networks:
-    #         cyberrange:
-    #             ipv4_address: 192.168.35.22
+    kali:
+        build: ./kali
+        container_name: kali
+        tty: true        
+        networks:
+            cyberrange:
+                ipv4_address: 192.168.35.22
 
     parrotsec:
         build: ./parrotsec
@@ -20,15 +20,24 @@ services:
                 ipv4_address: 192.168.35.23
 
     kali-forensics:
-        # build: ./kali
         build: 
             context: .
-            dockerfile: ./kali/Dockerfile.kali-tools-forensics
+            dockerfile: ./kali/Dockerfile.kalilinux.kali-tools-forensics
         container_name: kali
         tty: true        
         networks:
             cyberrange:
                 ipv4_address: 192.168.35.24
+
+    kali-web:
+        build: 
+            context: .
+            dockerfile: ./kali/Dockerfile.kalilinux.kali-tools-web
+        container_name: kali
+        tty: true        
+        networks:
+            cyberrange:
+                ipv4_address: 192.168.35.25                
 
     # https://github.com/juice-shop/juice-shop
     owasp-juice-shop:
