@@ -11,3 +11,9 @@ parrotsec-core     /bin/sh -c bash $@               Up
 postgresql         docker-entrypoint.sh postgres    Restarting                                           
 webgoat            /bin/sh -c /bin/bash /home ...   Up           8080/tcp, 9090/tcp   
 ~~~~
+~~~~
+git clone https://github.com/githubfoam/cyberrange-kali-githubactions.git && cd cyber*
+sudo docker-compose --file dockerfiles/kalilinux/docker-compose-kali.yml up -d
+sudo docker-compose --file dockerfiles/kalilinux/docker-compose-kali.yml ps
+sudo docker exec --tty --interactive kali /bin/bash
+~~~~
