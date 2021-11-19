@@ -2,13 +2,13 @@ version: '3'
 
 services:
 
-    kali:
-        build: ./kali
-        container_name: kali
-        tty: true        
-        networks:
-            cyberrange:
-                ipv4_address: 192.168.35.22
+    # kali:
+    #     build: ./kali
+    #     container_name: kali
+    #     tty: true        
+    #     networks:
+    #         cyberrange:
+    #             ipv4_address: 192.168.35.22
 
     parrotsec:
         build: ./parrotsec
