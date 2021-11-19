@@ -21,12 +21,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tor  \    
     strace \
     ltrace \
+    hping3 \
+    nmap \
     # https://github.com/danielmiessler/SecLists
     seclists \
     # python3-apt must be installed to use check mode,dry-runs
     python3-apt \
-    ansible \
-    hping3
+    ansible 
 
 CMD ["/bin/bash"]
 
