@@ -68,7 +68,6 @@ services:
                 ipv4_address: 192.168.35.5
 
     webgoat:
-        # build: ./webgoat
         build: 
             context: .
             dockerfile: ./webgoat/Dockerfile.webgoat        

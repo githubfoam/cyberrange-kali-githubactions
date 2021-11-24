@@ -2,7 +2,7 @@ name: "kali cyberrange CI workflow"
 
 on:
   push:
-    branches: [ dev]
+    branches: [ main]
 
 jobs:
 
