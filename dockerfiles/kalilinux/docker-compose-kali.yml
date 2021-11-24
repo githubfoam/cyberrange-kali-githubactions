@@ -23,7 +23,7 @@ services:
         build: 
             context: .
             dockerfile: ./kali/Dockerfile.kalilinux.kali-tools-forensics
-        container_name: kali
+        container_name: kali-forensics
         tty: true        
         networks:
             cyberrange:
