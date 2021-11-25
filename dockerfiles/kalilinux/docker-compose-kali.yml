@@ -2,6 +2,10 @@ version: '3'
 
 services:
 
+#######################################
+# kali cluster
+#######################################
+
     kali:
         build: ./kali
         container_name: kali
@@ -9,6 +13,20 @@ services:
         networks:
             cyberrange:
                 ipv4_address: 192.168.35.22
+
+    kali-forensics:
+        build: 
+            context: .
+            dockerfile: ./kali/Dockerfile.kalilinux.kali-tools-forensics
+        container_name: kali-forensics
+        tty: true        
+        networks:
+            cyberrange:
+                ipv4_address: 192.168.35.24   
+                           
+#######################################
+# parrot os cluster
+#######################################
 
     parrotsec:
         build: ./parrotsec
@@ -19,15 +37,25 @@ services:
             cyberrange:
                 ipv4_address: 192.168.35.23
 
-    kali-forensics:
-        build: 
-            context: .
-            dockerfile: ./kali/Dockerfile.kalilinux.kali-tools-forensics
-        container_name: kali-forensics
+#######################################
+# zap proxy os cluster builds
+#######################################
+
+    zap2docker-stable : 
+        image: owasp/zap2docker-stable
+        container_name: zap2docker-stable
         tty: true        
         networks:
             cyberrange:
-                ipv4_address: 192.168.35.24              
+                ipv4_address: 192.168.35.90
+
+    zap2docker-weekly : 
+        image: owasp/zap2docker-weekly
+        container_name: zap2docker-weekly
+        tty: true        
+        networks:
+            cyberrange:
+                ipv4_address: 192.168.35.91
 
     # https://github.com/juice-shop/juice-shop
     owasp-juice-shop:
