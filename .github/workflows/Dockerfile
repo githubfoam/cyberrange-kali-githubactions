@@ -1,9 +1,8 @@
 # Base image
 FROM python:3.11-slim
 
-# Metadata
 LABEL maintainer="you@example.com"
-LABEL description="Shuffle - Open source SOAR platform"
+LABEL description="Shuffle - Open source SOAR backend"
 
 # Install dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -16,10 +15,11 @@ WORKDIR /app
 # Clone Shuffle repository
 RUN git clone https://github.com/Shuffle/Shuffle.git /app
 
-# Install Python dependencies
+# Install backend Python dependencies
+WORKDIR /app/backend
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Shuffle exposes port 3001 by default
+# Shuffle backend port
 EXPOSE 3001
 
 # Environment variables
@@ -27,5 +27,5 @@ ENV PYTHONUNBUFFERED=1 \
     FLASK_ENV=production \
     SHUFFLE_APP_SECRET="shuffle-secret"
 
-# Start Shuffle backend
-CMD ["python3", "shuffle_app.py"]
+# Run backend
+CMD ["python3", "app.py"]
