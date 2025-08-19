@@ -1,0 +1,59 @@
+name: Shuffle CI
+
+on:
+  push:
+    branches: [ "test" ]
+  pull_request:
+    branches: [ "test" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: "os fingerprinting"
+        run: |
+            hostnamectl status
+            lsb_release -a
+            lsb_release -d
+            cat /etc/lsb-release
+            cat /etc/issue
+            cat /etc/os-release
+            sudo apt-get install -y neofetch && neofetch          
+
+      # Build Docker image for Shuffle
+      - name: Build Shuffle Docker image
+        run: |
+          docker build -t shuffle-app -f dockerfiles/Dockerfile.shuffle .
+
+      # Run container in detached mode
+      - name: Run Shuffle container
+        run: |
+          docker run -d --name shuffle-test -p 3001:3001 shuffle-app
+          sleep 15  # wait for Shuffle to initialize
+
+      # Test: check Shuffle web service responds
+      - name: Test Shuffle service (HTTP healthcheck)
+        run: |
+          curl --fail http://localhost:3001 || (echo "Shuffle not running" && exit 1)
+
+      # Test: verify logs
+      - name: Check container logs
+        run: |
+          docker logs shuffle-test | grep "Shuffle"
+
+      # Optional: Run Shuffle CLI tests (if CLI is included in the image)
+      - name: Run Shuffle CLI help
+        run: |
+          docker exec shuffle-test /bin/sh -c "shuffle --help || true"
+
+      # Cleanup
+      - name: Stop and remove container
+        if: always()
+        run: |
+          docker stop shuffle-test
+          docker rm shuffle-test
