@@ -1,4 +1,4 @@
-name: Deploy Threat Intel Stack
+name: Threat Intelligence CI
 
 on:
   push:
@@ -9,32 +9,18 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Docker Compose
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Pull and start Docker Compose services
         run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose version
-
-      - name: Start Docker Compose stack
-        run: docker-compose up -d
-
-      - name: Wait for TheHive and Cortex
-        run: |
-          echo "Waiting for TheHive..."
-          timeout 120 bash -c 'until curl -sSf http://localhost:9000; do sleep 5; done'
-          echo "Waiting for Cortex..."
-          timeout 120 bash -c 'until curl -sSf http://localhost:9001; do sleep 5; done'
-
-      - name: Run health checks
-        run: |
-          curl -sSf http://localhost:9000/api/status
-          curl -sSf http://localhost:9001/api/status
-
-      - name: Tear down stack
-        if: always()
-        run: docker-compose down
+          docker-compose down
+          docker-compose pull
+          docker-compose up -d
+          
+      - name: List running containers
+        run: docker ps

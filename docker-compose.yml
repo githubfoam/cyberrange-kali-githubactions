@@ -1,66 +1,160 @@
+
+networks:
+  cicd-net:
+    driver: bridge
+
 services:
+  # -------------------------
+  # Nginx Reverse Proxy
+  # -------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    depends_on:
+      - thehive
+      - cortex
+      - wazuh
+      - misp
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    networks:
+      - cicd-net
+
+  # -------------------------
+  # TheHive
+  # -------------------------
+  thehive:
+    image: strangebee/thehive:5.2
+    container_name: thehive
+    depends_on:
+      - cassandra
+      - elasticsearch
+      - minio
+      - cortex
+    environment:
+      - THEHIVE_CORTEX_URL=http://cortex:9001
+      - CORS_ALLOW_ORIGIN=*
+      - JAVA_OPTS=-Xms512M -Xmx1024M
+    volumes:
+      - thehive-data:/data
+    networks:
+      - cicd-net
+
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra
+    environment:
+      - MAX_HEAP_SIZE=512M
+      - HEAP_NEWSIZE=128M
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    networks:
+      - cicd-net
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
+    container_name: elasticsearch
     environment:
       - discovery.type=single-node
-      - bootstrap.memory_lock=true
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ulimits:
       memlock:
         soft: -1
         hard: -1
     volumes:
-      - esdata:/usr/share/elasticsearch/data
-    ports:
-      - "9200:9200"
+      - es-data:/usr/share/elasticsearch/data
+    networks:
+      - cicd-net
 
-  thehive:
-    image: strangebee/thehive:5.1.0
-    depends_on:
-      - elasticsearch
+  minio:
+    image: minio/minio:RELEASE.2025-08-01T23-15-46Z
+    container_name: minio
     environment:
-      - JAVA_OPTS=-Xms512m -Xmx1024m
-      - THEHIVE_ELASTICSEARCH__URL=http://elasticsearch:9200
-    ports:
-      - "9000:9000"
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data
     volumes:
-      - thehive_data:/opt/thehive/data
+      - minio-data:/data
+    networks:
+      - cicd-net
 
+  # -------------------------
+  # Cortex
+  # -------------------------
   cortex:
-    image: thehiveproject/cortex:3.1.0
+    image: thehiveproject/cortex:4.2.0-1
+    container_name: cortex
     depends_on:
       - elasticsearch
     environment:
-      - JAVA_OPTS=-Xms512m -Xmx1024m
-      - CORTEX_ELASTICSEARCH__URL=http://elasticsearch:9200
-    ports:
-      - "9001:9001"
+      - CORTEX_ELASTICSEARCH_HOST=elasticsearch
+      - CORTEX_ELASTICSEARCH_PORT=9200
+      - CORTEX_ADMIN_PASSWORD=SecretPassword
     volumes:
-      - cortex_data:/opt/cortex/data
+      - cortex-data:/data
+    networks:
+      - cicd-net
 
-  misp:
-    image: harvarditsecurity/misp:latest
-    ports:
-      - "443:443"
-    environment:
-      - MYSQL_ROOT_PASSWORD=securepassword
-      - MISP_ADMIN_EMAIL=admin@misp.local
-      - MISP_ADMIN_PASSPHRASE=admin123
-    volumes:
-      - misp_data:/var/www/MISP
-
+  # -------------------------
+  # Wazuh
+  # -------------------------
   wazuh:
-    image: wazuh/wazuh:4.7.2
+    image: wazuh/wazuh:5.3.3
+    container_name: wazuh
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
     ports:
-      - "1514:1514/udp"
       - "55000:55000"
+      - "1514:1514/udp"
+      - "514:514/udp"
+      - "5601:5601"
     volumes:
-      - wazuh_data:/var/ossec/data
+      - wazuh-data:/var/ossec/data
+    networks:
+      - cicd-net
+
+  # -------------------------
+  # MISP
+  # -------------------------
+  misp:
+    image: harvarditsecurity/misp
+    container_name: misp
+    depends_on:
+      - misp-db
+    environment:
+      MYSQL_ROOT_PASSWORD: misp
+      MYSQL_PASSWORD: misp
+      MISP_ADMIN_EMAIL: admin@misp.local
+      MISP_ADMIN_PASSWORD: SecretPassword
+      MISP_FQDN: misp.local
+    volumes:
+      - misp-data:/var/www/MISP
+    networks:
+      - cicd-net
+
+  misp-db:
+    image: mysql:8.0
+    container_name: misp-db
+    environment:
+      MYSQL_ROOT_PASSWORD: misp
+      MYSQL_DATABASE: misp
+      MYSQL_USER: misp
+      MYSQL_PASSWORD: misp
+    volumes:
+      - misp-db-data:/var/lib/mysql
+    networks:
+      - cicd-net
 
 volumes:
-  esdata:
-  thehive_data:
-  cortex_data:
-  misp_data:
-  wazuh_data:
+  thehive-data:
+  cassandra-data:
+  es-data:
+  minio-data:
+  cortex-data:
+  wazuh-data:
+  misp-data:
+  misp-db-data:
