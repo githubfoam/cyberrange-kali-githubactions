@@ -1,4 +1,4 @@
-name: Shuffle CI
+name: Shuffle Fullstack CI
 
 on:
   push:
@@ -14,25 +14,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Shuffle Docker image
-        run: |
-          docker build -t shuffle-backend -f Dockerfile .
+      - name: Set up Docker Compose
+        run: docker compose version
 
-      - name: Run Shuffle container
+      - name: Build and start services
         run: |
-          docker run -d --name shuffle-test -p 3001:3001 shuffle-backend
-          sleep 20
+          docker compose up -d --build
+          sleep 30  # give backend+frontend time to start
 
-      - name: Test Shuffle service (HTTP healthcheck)
+      - name: Test Backend API
         run: |
-          curl --fail http://localhost:3001 || (echo "Shuffle not running" && exit 1)
+          curl --fail http://localhost:3001 || (echo "Backend not running" && exit 1)
 
-      - name: Check container logs
+      - name: Test Frontend UI
         run: |
-          docker logs shuffle-test | tail -n 50
+          curl --fail http://localhost:8080 || (echo "Frontend not running" && exit 1)
+
+      - name: Show Logs (for debugging)
+        run: |
+          docker compose logs backend
+          docker compose logs frontend
 
       - name: Cleanup
         if: always()
-        run: |
-          docker stop shuffle-test
-          docker rm shuffle-test
+        run: docker compose down
